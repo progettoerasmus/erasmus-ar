@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <title>Erasmus+ AR: Gusto Aumentato + Saluti 🇮🇹 🇫🇷</title>
+    
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    
+    <style>
+        body { margin: 0; overflow: hidden; font-family: sans-serif; background-color: #000; }
+        
+        /* Header con bandierine */
+        #header {
+            position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+            z-index: 10000; display: flex; align-items: center; gap: 10px;
+            background: rgba(255,255,255,0.95); padding: 8px 15px; border-radius: 50px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4); width: auto; max-width: 90%; justify-content: center;
+        }
+        .flag { font-size: 22px; }
+        #title { font-weight: bold; color: #003399; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Overlay di avvio */
+        #overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column; color: white; transition: opacity 0.5s;
+        }
+        #start-btn {
+            background: #27ae60; color: white; border: none; padding: 20px 40px;
+            font-size: 20px; border-radius: 50px; cursor: pointer; font-weight: bold;
+            box-shadow: 0 0 20px rgba(39, 174, 96, 0.5); text-transform: uppercase;
+        }
+    </style>
+</head>
+
+<body style="margin: 0; overflow: hidden;">
+
+    <div id="header">
+        <span class="flag">🇮🇹</span>
+        <span id="title">Gusto Aumentato AR</span>
+        <span class="flag">🇫🇷</span>
+    </div>
+
+    <div id="overlay">
+        <button id="start-btn">START EXPERIENCE</button>
+        <p style="margin-top:20px; opacity:0.7; text-align:center; padding:0 20px; font-size:14px;">
+            Clicca per attivare, poi inquadra i prodotti o il marker saluti.
+        </p>
+    </div>
+
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;" vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true; colorManagement: true;">
+        
+        <a-assets>
+            <video id="v-it" src="video_it.mp4" loop="true" crossorigin="anonymous" playsinline webkit-playsinline muted></video>
+            <video id="v-fr" src="video_fr.mp4" loop="true" crossorigin="anonymous" playsinline webkit-playsinline muted></video>
+            <video id="v-saluti" src="video_saluti.mp4" loop="true" crossorigin="anonymous" playsinline webkit-playsinline muted></video>
+        </a-assets>
+
+        <a-marker preset="hiro" id="marker-it">
+            <a-video src="#v-it" width="1.6" height="0.9" position="0 0.2 0" rotation="-90 0 0"></a-video>
+        </a-marker>
+
+        <a-marker preset="kanji" id="marker-fr">
+            <a-video src="#v-fr" width="1.6" height="0.9" position="0 0.2 0" rotation="-90 0 0"></a-video>
+        </a-marker>
+        
+        <a-marker type="pattern" url="saluti.patt" id="marker-saluti">
+            <a-video src="#v-saluti" width="1.6" height="0.9" position="0 0.2 0" rotation="-90 0 0"></a-video>
+        </a-marker>
+
+        <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+        const btn = document.querySelector('#start-btn');
+        const overlay = document.querySelector('#overlay');
+        const vIt = document.querySelector('#v-it');
+        const vFr = document.querySelector('#v-fr');
+        const vSaluti = document.querySelector('#v-saluti');
+        
+        const videos = [vIt, vFr, vSaluti];
+        let experienceStarted = false;
+
+        btn.addEventListener('click', () => {
+            // Sblocco audio forzato per tutti i video
+            videos.forEach(v => {
+                v.play().then(() => {
+                    v.pause();
+                    v.muted = false; 
+                    v.currentTime = 0;
+                });
+            });
+            
+            experienceStarted = true;
+            overlay.style.display = 'none';
+        });
+
+        // Gestione Marker intelligente (Play solo se l'utente ha cliccato e per il video corretto)
+        document.querySelectorAll('a-marker').forEach(m => {
+            m.addEventListener('markerFound', () => {
+                if (!experienceStarted) return;
+                
+                // Capisce quale video far partire in base al marker trovato
+                let vid;
+                if(m.id === 'marker-it') vid = vIt;
+                else if(m.id === 'marker-fr') vid = vFr;
+                else if(m.id === 'marker-saluti') vid = vSaluti;
+                
+                vid.play();
+            });
+            
+            m.addEventListener('markerLost', () => {
+                const vid = (m.id === 'marker-it') ? vIt : (m.id === 'marker-fr' ? vFr : vSaluti);
+                vid.pause();
+            });
+        });
+    </script>
+</body>
+</html>
